@@ -1,23 +1,23 @@
 #include <Arduino.h>
 
 #include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
+//#include <ESP8266HTTPClient.h>
 #include <PubSubClient.h>
 #include <Timer.h>
-#include <ArduinoJson.h>
+//#include <ArduinoJson.h>
 
 Timer timer;
 int authenticate_timer;
 
 
-const char* device = "{\"deviceType\":\"LightingControl\",\"deviceCode\": \"lt04\",\"numberOfPorts\": 2, \"lights\": [{\"portId\": 1, \"dimmable\": true},{\"portId\": 2, \"dimmable\":  false}]}";
+const char* device = "{\"deviceType\":\"LightingControl\",\"deviceCode\": \"lt04\",\"numberOfPorts\": 4, \"lights\": [{\"portId\": 1, \"dimmable\": true},{\"portId\": 2, \"dimmable\":  false},{\"portId\": 3, \"dimmable\":  false},{\"portId\": 4, \"dimmable\":  false}]}";
 String device_Id = "";
 
 const char* ssid     = "BKHome";
 const char* password = "bkhomebkhome";
 
 //khai bao mqtt
-#define host "192.168.10.102"
+#define host "192.168.10.101"
 #define mqtt_topic_pub "presence"
 #define mqtt_topic_sub "presence"
 #define mqtt_topic_lwt "lwt"
@@ -30,6 +30,8 @@ const uint16_t http_port = 3000;
  #define pinout 12
  #define pinin 14
  #define led 13
+ #define sw1 9
+ #define sw2 10
 
  int delayTime = 8000;
 int light = 0;
@@ -61,6 +63,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     rmsg += (char)payload[i];
   }
 
+
   if((String)topic == "authenticate/lt04"){
     timer.stop(authenticate_timer);
     device_Id = rmsg;
@@ -80,17 +83,27 @@ void checkMqttConnection() {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (client.connect("lt04", "lwt", 0, false, "lt04")) {
-      authenticate_timer = timer.every(5000, authenticate);
       Serial.println("connected");
-      // Once connected, publish an announcement...
-      //client.publish("connected", "hello");
-      // ... and resubscribe
+      //client.publish("connected", "hello");\
+      delay(10);
       client.subscribe("authenticate/lt04");
+      authenticate_timer = timer.every(5000, authenticate);
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
+      Serial.println(" try again in 3 seconds");
     }
+  }
+}
+
+void readButton(){
+  if(!digitalRead(sw1)){
+    while(!digitalRead(sw1));
+    Serial.println("00");
+  }
+  if(!digitalRead(sw2)){
+    while(!digitalRead(sw2));
+    Serial.println("01");
   }
 }
 
@@ -98,6 +111,8 @@ void setup() {
     pinMode(pinout, OUTPUT);
     pinMode(pinin, INPUT);
     pinMode(led, OUTPUT);
+    pinMode(sw1, INPUT);
+    pinMode(sw2, INPUT);
    Serial.begin(9600);
    delay(10);
 
@@ -125,10 +140,11 @@ void setup() {
 
   client.setServer(host, mqtt_port);
   client.setCallback(callback);
-  timer.every(5000, checkMqttConnection);
+  timer.every(3000, checkMqttConnection);
 }
 
 void loop(){
   client.loop();
   timer.update();
+  readButton();
 }
