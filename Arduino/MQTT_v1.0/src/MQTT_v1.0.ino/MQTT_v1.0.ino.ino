@@ -17,7 +17,7 @@ const char* ssid     = "BKHome";
 const char* password = "bkhomebkhome";
 
 //khai bao mqtt
-#define host "192.168.10.101"
+#define host "192.168.10.100"
 #define mqtt_topic_pub "presence"
 #define mqtt_topic_sub "presence"
 #define mqtt_topic_lwt "lwt"
@@ -32,6 +32,9 @@ const uint16_t http_port = 3000;
  #define led 13
  #define sw1 9
  #define sw2 10
+ #define pinin1 16
+#define pinin2 5
+#define pinin3 4
 
  int delayTime = 8000;
 int light = 0;
@@ -105,6 +108,10 @@ void readButton(){
     while(!digitalRead(sw2));
     Serial.println("01");
   }
+}
+
+void readStatus(){
+  
 }
 
 void setup() {
