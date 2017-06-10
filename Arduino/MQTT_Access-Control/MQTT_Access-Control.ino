@@ -34,6 +34,9 @@ const uint16_t mqtt_port = 1883;
 String user_enrol_id = "";
 
 //define fingerprint params
+// Vin = 5 V
+// GPIO12 = NodeMCU D6 is IN from sensor (GREEN wire)
+// GPIO14 = NodeMCU D5 is OUT from arduino  (WHITE/YELLOW wire)
 #define TEMPLATES_PER_PAGE  256
 SoftwareSerial mySerial(12, 14);
 FPM finger;

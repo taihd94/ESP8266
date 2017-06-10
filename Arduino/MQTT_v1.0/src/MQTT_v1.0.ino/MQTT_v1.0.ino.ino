@@ -12,22 +12,13 @@
 #define light4 16
 #define light2 4
 #define light3 5
-#define emergency_pin 2
-#define buzzer_pin 0
 
 Timer timer;
 int authenticate_timer;
-int emergcy_authenticate_timer;
-int buzzer_authenticate_timer;
 
 const char* device = "{\"deviceType\":\"LightingControl\",\"deviceCode\": \"lt04\",\"numberOfPorts\": 4, \"lights\": [{\"portId\": 1, \"dimmable\": true},{\"portId\": 2, \"dimmable\":  false},{\"portId\": 3, \"dimmable\":  false},{\"portId\": 4, \"dimmable\":  false}]}";
 String device_id = "";
 
-const char* emergency = "{\"deviceType\":\"SensorModule\",\"deviceCode\": \"emrgcy\",\"sensors\": [{\"name\": \"Emergency\", \"_type\": \"Emergency\", \"value\": 0}]}";
-String emergency_id = "";
-
-const char* buzzer = "{\"deviceType\":\"LightingControl\", \"deviceCode\": \"bzz\",\"lights\": [{\"portId\": 5,\"name\": \"Buzzer\",\"dimmable\": false,\"typeOfLight\": \"Alarm\"}]}";
-String buzzer_id = "";
 
 const char* ssid     = "BKHome";
 const char* password = "bkhomebkhome";
@@ -58,7 +49,6 @@ long lastMsg = 0;
 char msg[50];
 int value = 0;
 
-boolean isAuthDone = false;
 
 //Authenticate
 void authenticate(){
@@ -66,15 +56,6 @@ void authenticate(){
    client.publish("authenticate", device);
 }
 
-void authenticate_emergcy() {
-  Serial.println("Authenticating emergency...");
-  client.publish("authenticate", emergency);
-}
-
-void authenticate_buzzer() {
-  Serial.println("Authenticating buzzer...");
-  client.publish("authenticate", buzzer);
-}
 
 //mqtt callback function
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -90,22 +71,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   if((String)topic == "authenticate/lt04"){
     timer.stop(authenticate_timer);
-    emergcy_authenticate_timer = timer.every(3000, authenticate_emergcy);
     device_id = rmsg;
     String topic = "devices/" + device_id;
-    client.subscribe(topic.c_str());
-    Serial.println(topic.c_str());
-  } else if ((String)topic == "authenticate/emrgcy") {
-    timer.stop(emergcy_authenticate_timer);
-    buzzer_authenticate_timer = timer.every(3000, authenticate_buzzer);
-    emergency_id = rmsg;
-    String topic = "devices/" + emergency_id;
-    client.subscribe(topic.c_str());
-    Serial.println(topic.c_str());
-  } else  if ((String)topic == "authenticate/bzz") {
-    timer.stop(buzzer_authenticate_timer);
-    buzzer_id = rmsg;
-    String topic = "devices/" + buzzer_id;
     client.subscribe(topic.c_str());
     Serial.println(topic.c_str());
   }  else {
@@ -145,11 +112,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   //        delay(100);
         }
         break;
-       case '5':
-          int value = rmsg.charAt(1) - '0';
-  //        Serial.println(value);
-         digitalWrite(buzzer_pin,value);
-         break;
     }
   }
 }
@@ -165,11 +127,7 @@ void checkMqttConnection() {
       //client.publish("connected", "hello");\
       delay(10);
       client.subscribe("authenticate/lt04");
-      client.subscribe("authenticate/emrgcy");
-      client.subscribe("authenticate/bzz");
       authenticate_timer = timer.every(5000, authenticate);
-//      emergcy_authenticate_timer = timer.every(5000, authenticate_emergcy);
-//      buzzer_authenticate_timer = timer.every(5000, authenticate_buzzer);
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -253,10 +211,6 @@ void setup() {
     pinMode(light2, INPUT);
     pinMode(light3, INPUT);
     pinMode(light4, INPUT);
-    pinMode(emergency_pin, INPUT);
-    pinMode(buzzer_pin, OUTPUT);
-
-    digitalWrite(buzzer_pin, LOW);
     
    Serial.begin(9600);
    delay(10);
@@ -288,30 +242,10 @@ void setup() {
   timer.every(3000, checkMqttConnection);
 }
 
-boolean flag = true;
-void readSensors() {
-  int value = digitalRead(emergency_pin);
-//  Serial.println(value);
-  if (value&&flag) {
-    String topic  = "devices/sensorModule/" + emergency_id;
-    emergency = "{\"deviceType\":\"SensorModule\",\"deviceCode\": \"emrgcy\",\"sensors\": [{\"name\": \"Emergency\", \"_type\": \"Emergency\", \"value\": 1}]}";
-    client.publish(topic.c_str(), emergency);
-//    Serial.println("1");
-    flag = false;
-  }
-  if (!value&&!flag) {
-    String topic  = "devices/sensorModule/" + emergency_id;
-    emergency = "{\"deviceType\":\"SensorModule\",\"deviceCode\": \"emrgcy\",\"sensors\": [{\"name\": \"Emergency\", \"_type\": \"Emergency\", \"value\": 0}]}";
-    client.publish(topic.c_str(), emergency);
-//    Serial.println("0");
-    flag = true;
-  }
-}
 
 void loop(){
   client.loop();
   timer.update();
 //  readButtons();
   readLightsStatus();
-  readSensors();
 }
