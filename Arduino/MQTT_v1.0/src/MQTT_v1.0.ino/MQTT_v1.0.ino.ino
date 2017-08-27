@@ -16,7 +16,7 @@
 Timer timer;
 int authenticate_timer;
 
-const char* device = "{\"deviceType\":\"LightingControl\",\"deviceCode\": \"lt04\",\"numberOfPorts\": 4, \"lights\": [{\"portId\": 1, \"dimmable\": true},{\"portId\": 2, \"dimmable\":  false},{\"portId\": 3, \"dimmable\":  false},{\"portId\": 4, \"dimmable\":  false}]}";
+const char* device = "{\"deviceType\":\"LightingControl\",\"deviceCode\": \"lt04\",\"numberOfPorts\": 4, \"lights\": [{\"portId\": 1, \"dimmable\": true},{\"portId\": 2, \"dimmable\":  false},{\"portId\": 3, \"dimmable\":  false}]}";
 String device_id = "";
 
 

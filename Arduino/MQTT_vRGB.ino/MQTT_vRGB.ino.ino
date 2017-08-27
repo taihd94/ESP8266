@@ -12,7 +12,8 @@
  #define blue 16
 #define emrgcy_pin 10
 #define bzz_pin 5
-#define door_pin 4
+#define magDoor_pin 12
+#define doorSensor_pin 4
 
 Timer timer;
 int authenticate_timer;
@@ -89,9 +90,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   if((String)topic == "devices/" + rgb_id){
     char light = rmsg.charAt(0);
-    switch(light){
-     case '1':
-        rmsg.remove(0,2);
+    if(light=='1'){
+       rmsg.remove(0,2);
         long number = strtol( rmsg.c_str(), NULL, 16);
         // Split them up into r, g, b values
         int red_8bit = number >> 16;
@@ -106,8 +106,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
 //        Serial.print("r: "); Serial.println(red_10bit);
 //        Serial.print("g: "); Serial.println(green_10bit);
 //        Serial.print("b: "); Serial.println(blue_10bit);
-        break;
+    } else if(light=='2'){
+      int value = rmsg.charAt(1) - '0';
+      digitalWrite(magDoor_pin,value);
     }
+    
   } else  if((String)topic =="devices/" + buzzer_id){
     int value = rmsg.charAt(1) - '0';
 //    Serial.println(value);
@@ -171,8 +174,9 @@ void setup() {
     pinMode(green, OUTPUT);
     pinMode(blue, OUTPUT);
     pinMode(bzz_pin, OUTPUT);
+    pinMode(magDoor_pin, OUTPUT);
     pinMode(emrgcy_pin, INPUT);
-    pinMode(door_pin, INPUT);
+    pinMode(doorSensor_pin, INPUT);
    Serial.begin(9600);
    delay(10);
 
@@ -237,7 +241,7 @@ void readEmrgcySensorValue(){
 }
 
 void readDoorSensorValue(){
-   dValue = digitalRead(door_pin);
+   dValue = digitalRead(doorSensor_pin);
    if(dValue != dValue_previous){
       dValue_previous = dValue;
       Serial.println(dValue);

@@ -7,11 +7,7 @@
 #include <FPM.h>
 
 //define pin
-#define IN1     2
-#define IN2     0
-#define button1 5
-#define button2 4
-#define button3 13
+#define door_pin 13
 
 
 //define access point
@@ -68,11 +64,7 @@ void setup() {
   Serial.begin(9600);
   delay(10);
 
-  pinMode( IN1,      OUTPUT);
-  pinMode( IN2,      OUTPUT);
-  pinMode( button1,  INPUT);
-  pinMode( button2,  INPUT);
-  pinMode( button3,  INPUT);
+  pinMode( door_pin,      OUTPUT);
 
   mySerial.begin(57600);
   delay(10);
@@ -151,9 +143,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
   } else if ((String)topic == "devices/" + door_id ) {
     boolean value = (msg.charAt(1) - '0') == 1;
-    if (value) {
-      Open();
-    }
+    digitalWrite(door_pin, value);
   }
 }
 
@@ -180,44 +170,6 @@ void checkMqttConnection() {
     }
   }
 }
-
-//********************Door********************************//
-void Forward()
-{
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-}
-
-void Back()
-{
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-}
-
-
-void Stop()
-{
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, LOW);
-}
-
-void Open() {
-  Forward();
-  while (!digitalRead(button1)) {
-    delay(10);
-  };
-  Stop();
-  delay (3000);
-  Back();
-  while (!digitalRead(button2)) {
-    delay(10);
-  };
-  Stop();
-  String topic = "devices/lighting-control/" + door_id + "/1";
-  char msg[10] = "0";
-  client.publish(topic.c_str(), msg);
-}
-
 
 //********************FINGERPRINT***********************//
 
